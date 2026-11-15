@@ -1,0 +1,39 @@
+# ---- 基本版と同じ ----
+jupyterlab==4.5.1
+numpy>=1.25.0
+einops
+transformers>=4.50.3
+tokenizers>=0.13.3
+sentencepiece
+safetensors>=0.4.2
+aiohttp>=3.11.8
+yarl>=1.18.0
+pyyaml
+Pillow>=10.1.0
+scipy
+tqdm
+psutil
+kornia>=0.7.1
+# ---- 現行ComfyUI本体が追加で要求するもの(バージョン固定の部品は setup.sh が本体に合わせて入れる) ----
+torchsde
+alembic
+SQLAlchemy>=2.0.0
+filelock
+av>=17.0.0
+requests
+simpleeval>=1.0.0
+blake3
+spandrel
+pydantic~=2.0
+pydantic-settings~=2.0
+# ---- モデル取得 ----
+huggingface_hub[cli]>=0.34
+hf_transfer
+# ---- ComfyUI-See-through (レイヤー分解) ----
+diffusers>=0.25.0
+peft>=0.18.0
+accelerate>=0.20.0
+opencv-python-headless>=4.0.0
+scikit-learn>=1.0.0
+bitsandbytes>=0.49.2
+matplotlib

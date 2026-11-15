@@ -1,0 +1,248 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "元画像 (RGBA可)"
+    },
+    "inputs": {
+      "image": "live2d_test_image.png"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "マスク画像 (白=描き直す範囲)"
+    },
+    "inputs": {
+      "image": "live2d_test_mask.png"
+    }
+  },
+  "3": {
+    "class_type": "ImageToMask",
+    "_meta": {
+      "title": "マスク画像→マスク"
+    },
+    "inputs": {
+      "image": [
+        "2",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "4": {
+    "class_type": "GrowMask",
+    "_meta": {
+      "title": "マスクを広げる"
+    },
+    "inputs": {
+      "mask": [
+        "3",
+        0
+      ],
+      "expand": 12,
+      "tapered_corners": true
+    }
+  },
+  "5": {
+    "class_type": "MaskToImage",
+    "_meta": {
+      "title": "ぼかし用に画像化"
+    },
+    "inputs": {
+      "mask": [
+        "4",
+        0
+      ]
+    }
+  },
+  "6": {
+    "class_type": "ImageBlur",
+    "_meta": {
+      "title": "境界をぼかす"
+    },
+    "inputs": {
+      "image": [
+        "5",
+        0
+      ],
+      "blur_radius": 8,
+      "sigma": 4.0
+    }
+  },
+  "7": {
+    "class_type": "ImageToMask",
+    "_meta": {
+      "title": "合成用ソフトマスク"
+    },
+    "inputs": {
+      "image": [
+        "6",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "8": {
+    "class_type": "EmptyImage",
+    "_meta": {
+      "title": "白背景"
+    },
+    "inputs": {
+      "width": 64,
+      "height": 64,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "9": {
+    "class_type": "ImageCompositeMasked",
+    "_meta": {
+      "title": "透明部分を白で埋める(モデル入力用)"
+    },
+    "inputs": {
+      "destination": [
+        "1",
+        0
+      ],
+      "source": [
+        "8",
+        0
+      ],
+      "x": 0,
+      "y": 0,
+      "resize_source": true,
+      "mask": [
+        "1",
+        1
+      ]
+    }
+  },
+  "10": {
+    "class_type": "GetImageSize",
+    "_meta": {
+      "title": "元画像サイズ"
+    },
+    "inputs": {
+      "image": [
+        "1",
+        0
+      ]
+    }
+  },
+  "79": {
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "生成結果の代役"
+    },
+    "inputs": {
+      "image": "live2d_test_standin.png"
+    }
+  },
+  "80": {
+    "class_type": "ImageScale",
+    "_meta": {
+      "title": "元の解像度へ戻す"
+    },
+    "inputs": {
+      "image": [
+        "79",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "width": [
+        "10",
+        0
+      ],
+      "height": [
+        "10",
+        1
+      ],
+      "crop": "disabled"
+    }
+  },
+  "81": {
+    "class_type": "ImageCompositeMasked",
+    "_meta": {
+      "title": "マスク範囲だけ元画像へ貼り戻す"
+    },
+    "inputs": {
+      "destination": [
+        "1",
+        0
+      ],
+      "source": [
+        "80",
+        0
+      ],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": [
+        "7",
+        0
+      ]
+    }
+  },
+  "82": {
+    "class_type": "MaskComposite",
+    "_meta": {
+      "title": "透明のまま残す範囲 = 元の透明 − 描き足し範囲"
+    },
+    "inputs": {
+      "destination": [
+        "1",
+        1
+      ],
+      "source": [
+        "4",
+        0
+      ],
+      "x": 0,
+      "y": 0,
+      "operation": "subtract"
+    }
+  },
+  "83": {
+    "class_type": "JoinImageWithAlpha",
+    "_meta": {
+      "title": "アルファを付け直す"
+    },
+    "inputs": {
+      "image": [
+        "81",
+        0
+      ],
+      "alpha": [
+        "82",
+        0
+      ]
+    }
+  },
+  "90": {
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存: 完成パーツ(RGBA)"
+    },
+    "inputs": {
+      "images": [
+        "83",
+        0
+      ],
+      "filename_prefix": "live2d_parts/composite_only_final"
+    }
+  },
+  "91": {
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存: モデルの生出力(確認用)"
+    },
+    "inputs": {
+      "images": [
+        "80",
+        0
+      ],
+      "filename_prefix": "live2d_parts/composite_only_raw"
+    }
+  }
+}

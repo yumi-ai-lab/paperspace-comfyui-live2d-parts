@@ -1,0 +1,424 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "元画像 (RGBA可)"
+    },
+    "inputs": {
+      "image": "live2d_test_image.png"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "マスク画像 (白=描き直す範囲)"
+    },
+    "inputs": {
+      "image": "live2d_test_mask.png"
+    }
+  },
+  "3": {
+    "class_type": "ImageToMask",
+    "_meta": {
+      "title": "マスク画像→マスク"
+    },
+    "inputs": {
+      "image": [
+        "2",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "4": {
+    "class_type": "GrowMask",
+    "_meta": {
+      "title": "マスクを広げる"
+    },
+    "inputs": {
+      "mask": [
+        "3",
+        0
+      ],
+      "expand": 12,
+      "tapered_corners": true
+    }
+  },
+  "5": {
+    "class_type": "MaskToImage",
+    "_meta": {
+      "title": "ぼかし用に画像化"
+    },
+    "inputs": {
+      "mask": [
+        "4",
+        0
+      ]
+    }
+  },
+  "6": {
+    "class_type": "ImageBlur",
+    "_meta": {
+      "title": "境界をぼかす"
+    },
+    "inputs": {
+      "image": [
+        "5",
+        0
+      ],
+      "blur_radius": 8,
+      "sigma": 4.0
+    }
+  },
+  "7": {
+    "class_type": "ImageToMask",
+    "_meta": {
+      "title": "合成用ソフトマスク"
+    },
+    "inputs": {
+      "image": [
+        "6",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "8": {
+    "class_type": "EmptyImage",
+    "_meta": {
+      "title": "白背景"
+    },
+    "inputs": {
+      "width": 64,
+      "height": 64,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "9": {
+    "class_type": "ImageCompositeMasked",
+    "_meta": {
+      "title": "透明部分を白で埋める(モデル入力用)"
+    },
+    "inputs": {
+      "destination": [
+        "1",
+        0
+      ],
+      "source": [
+        "8",
+        0
+      ],
+      "x": 0,
+      "y": 0,
+      "resize_source": true,
+      "mask": [
+        "1",
+        1
+      ]
+    }
+  },
+  "10": {
+    "class_type": "GetImageSize",
+    "_meta": {
+      "title": "元画像サイズ"
+    },
+    "inputs": {
+      "image": [
+        "1",
+        0
+      ]
+    }
+  },
+  "50": {
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX 3 Image Klein"
+    },
+    "inputs": {
+      "unet_name": "flux3-image-klein-int8-convrot.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "51": {
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "テキストエンコーダ"
+    },
+    "inputs": {
+      "clip_name": "qwen3vl_4b_int8_convrot.safetensors",
+      "type": "flux3",
+      "device": "default"
+    }
+  },
+  "52": {
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "VAE"
+    },
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    }
+  },
+  "53": {
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "モデル用に約1MPへ"
+    },
+    "inputs": {
+      "image": [
+        "9",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 1.0,
+      "resolution_steps": 16
+    }
+  },
+  "70": {
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "指示文 (ここを書き換える)"
+    },
+    "inputs": {
+      "value": "Remove the front hair that covers the face and paint the hidden forehead, eyebrows and face outline underneath, in the same anime art style, line weight and skin colour. Keep everything else unchanged."
+    }
+  },
+  "57": {
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "指示文エンコード"
+    },
+    "inputs": {
+      "clip": [
+        "51",
+        0
+      ],
+      "text": [
+        "70",
+        0
+      ]
+    }
+  },
+  "58": {
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "ネガティブ(ゼロ)"
+    },
+    "inputs": {
+      "conditioning": [
+        "57",
+        0
+      ]
+    }
+  },
+  "59": {
+    "class_type": "ReferenceMultiLatent",
+    "_meta": {
+      "title": "参照画像をセット"
+    },
+    "inputs": {
+      "positive": [
+        "57",
+        0
+      ],
+      "negative": [
+        "58",
+        0
+      ],
+      "vae": [
+        "52",
+        0
+      ],
+      "resolution": "keep resolution",
+      "images.image0": [
+        "53",
+        0
+      ]
+    }
+  },
+  "60": {
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "元画像を潜在へ"
+    },
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "52",
+        0
+      ]
+    }
+  },
+  "61": {
+    "class_type": "SetLatentNoiseMask",
+    "_meta": {
+      "title": "マスク範囲だけ再生成"
+    },
+    "inputs": {
+      "samples": [
+        "60",
+        0
+      ],
+      "mask": [
+        "4",
+        0
+      ]
+    }
+  },
+  "62": {
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "サンプラー"
+    },
+    "inputs": {
+      "model": [
+        "50",
+        0
+      ],
+      "seed": 20261115,
+      "steps": 16,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "positive": [
+        "59",
+        0
+      ],
+      "negative": [
+        "59",
+        1
+      ],
+      "latent_image": [
+        "61",
+        0
+      ],
+      "denoise": 1.0
+    }
+  },
+  "63": {
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "デコード"
+    },
+    "inputs": {
+      "samples": [
+        "62",
+        0
+      ],
+      "vae": [
+        "52",
+        0
+      ]
+    }
+  },
+  "80": {
+    "class_type": "ImageScale",
+    "_meta": {
+      "title": "元の解像度へ戻す"
+    },
+    "inputs": {
+      "image": [
+        "63",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "width": [
+        "10",
+        0
+      ],
+      "height": [
+        "10",
+        1
+      ],
+      "crop": "disabled"
+    }
+  },
+  "81": {
+    "class_type": "ImageCompositeMasked",
+    "_meta": {
+      "title": "マスク範囲だけ元画像へ貼り戻す"
+    },
+    "inputs": {
+      "destination": [
+        "1",
+        0
+      ],
+      "source": [
+        "80",
+        0
+      ],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": [
+        "7",
+        0
+      ]
+    }
+  },
+  "82": {
+    "class_type": "MaskComposite",
+    "_meta": {
+      "title": "透明のまま残す範囲 = 元の透明 − 描き足し範囲"
+    },
+    "inputs": {
+      "destination": [
+        "1",
+        1
+      ],
+      "source": [
+        "4",
+        0
+      ],
+      "x": 0,
+      "y": 0,
+      "operation": "subtract"
+    }
+  },
+  "83": {
+    "class_type": "JoinImageWithAlpha",
+    "_meta": {
+      "title": "アルファを付け直す"
+    },
+    "inputs": {
+      "image": [
+        "81",
+        0
+      ],
+      "alpha": [
+        "82",
+        0
+      ]
+    }
+  },
+  "90": {
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存: 完成パーツ(RGBA)"
+    },
+    "inputs": {
+      "images": [
+        "83",
+        0
+      ],
+      "filename_prefix": "live2d_parts/flux3_distilled_final"
+    }
+  },
+  "91": {
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存: モデルの生出力(確認用)"
+    },
+    "inputs": {
+      "images": [
+        "80",
+        0
+      ],
+      "filename_prefix": "live2d_parts/flux3_distilled_raw"
+    }
+  }
+}

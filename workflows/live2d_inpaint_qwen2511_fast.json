@@ -1,0 +1,467 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "元画像 (RGBA可)"
+    },
+    "inputs": {
+      "image": "live2d_test_image.png"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "マスク画像 (白=描き直す範囲)"
+    },
+    "inputs": {
+      "image": "live2d_test_mask.png"
+    }
+  },
+  "3": {
+    "class_type": "ImageToMask",
+    "_meta": {
+      "title": "マスク画像→マスク"
+    },
+    "inputs": {
+      "image": [
+        "2",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "4": {
+    "class_type": "GrowMask",
+    "_meta": {
+      "title": "マスクを広げる"
+    },
+    "inputs": {
+      "mask": [
+        "3",
+        0
+      ],
+      "expand": 12,
+      "tapered_corners": true
+    }
+  },
+  "5": {
+    "class_type": "MaskToImage",
+    "_meta": {
+      "title": "ぼかし用に画像化"
+    },
+    "inputs": {
+      "mask": [
+        "4",
+        0
+      ]
+    }
+  },
+  "6": {
+    "class_type": "ImageBlur",
+    "_meta": {
+      "title": "境界をぼかす"
+    },
+    "inputs": {
+      "image": [
+        "5",
+        0
+      ],
+      "blur_radius": 8,
+      "sigma": 4.0
+    }
+  },
+  "7": {
+    "class_type": "ImageToMask",
+    "_meta": {
+      "title": "合成用ソフトマスク"
+    },
+    "inputs": {
+      "image": [
+        "6",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "8": {
+    "class_type": "EmptyImage",
+    "_meta": {
+      "title": "白背景"
+    },
+    "inputs": {
+      "width": 64,
+      "height": 64,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "9": {
+    "class_type": "ImageCompositeMasked",
+    "_meta": {
+      "title": "透明部分を白で埋める(モデル入力用)"
+    },
+    "inputs": {
+      "destination": [
+        "1",
+        0
+      ],
+      "source": [
+        "8",
+        0
+      ],
+      "x": 0,
+      "y": 0,
+      "resize_source": true,
+      "mask": [
+        "1",
+        1
+      ]
+    }
+  },
+  "10": {
+    "class_type": "GetImageSize",
+    "_meta": {
+      "title": "元画像サイズ"
+    },
+    "inputs": {
+      "image": [
+        "1",
+        0
+      ]
+    }
+  },
+  "20": {
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Qwen-Image-Edit-2511"
+    },
+    "inputs": {
+      "unet_name": "qwen_image_edit_2511_fp8mixed.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "21": {
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "テキストエンコーダ"
+    },
+    "inputs": {
+      "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "22": {
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "VAE"
+    },
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    }
+  },
+  "23": {
+    "class_type": "ModelSamplingAuraFlow",
+    "_meta": {
+      "title": "shift"
+    },
+    "inputs": {
+      "model": [
+        "20",
+        0
+      ],
+      "shift": 3.1
+    }
+  },
+  "24": {
+    "class_type": "CFGNorm",
+    "_meta": {
+      "title": "CFGNorm"
+    },
+    "inputs": {
+      "model": [
+        "23",
+        0
+      ],
+      "strength": 1.0
+    }
+  },
+  "26": {
+    "class_type": "FluxKontextImageScale",
+    "_meta": {
+      "title": "モデル用に約1MPへ"
+    },
+    "inputs": {
+      "image": [
+        "9",
+        0
+      ]
+    }
+  },
+  "27": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "指示文 (ここを書き換える)"
+    },
+    "inputs": {
+      "clip": [
+        "21",
+        0
+      ],
+      "vae": [
+        "22",
+        0
+      ],
+      "image1": [
+        "26",
+        0
+      ],
+      "prompt": "Remove the front hair that covers the face and paint the hidden forehead, eyebrows and face outline underneath, in the same anime art style, line weight and skin colour. Keep everything else unchanged."
+    }
+  },
+  "28": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "ネガティブ"
+    },
+    "inputs": {
+      "clip": [
+        "21",
+        0
+      ],
+      "vae": [
+        "22",
+        0
+      ],
+      "image1": [
+        "26",
+        0
+      ],
+      "prompt": ""
+    }
+  },
+  "29": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "_meta": {
+      "title": "参照方式(+)"
+    },
+    "inputs": {
+      "conditioning": [
+        "27",
+        0
+      ],
+      "reference_latents_method": "index_timestep_zero"
+    }
+  },
+  "30": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "_meta": {
+      "title": "参照方式(-)"
+    },
+    "inputs": {
+      "conditioning": [
+        "28",
+        0
+      ],
+      "reference_latents_method": "index_timestep_zero"
+    }
+  },
+  "31": {
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "元画像を潜在へ"
+    },
+    "inputs": {
+      "pixels": [
+        "26",
+        0
+      ],
+      "vae": [
+        "22",
+        0
+      ]
+    }
+  },
+  "32": {
+    "class_type": "SetLatentNoiseMask",
+    "_meta": {
+      "title": "マスク範囲だけ再生成"
+    },
+    "inputs": {
+      "samples": [
+        "31",
+        0
+      ],
+      "mask": [
+        "4",
+        0
+      ]
+    }
+  },
+  "25": {
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "4ステップLoRA"
+    },
+    "inputs": {
+      "model": [
+        "24",
+        0
+      ],
+      "lora_name": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+      "strength_model": 1.0
+    }
+  },
+  "33": {
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "サンプラー"
+    },
+    "inputs": {
+      "model": [
+        "25",
+        0
+      ],
+      "seed": 20261115,
+      "steps": 4,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "positive": [
+        "29",
+        0
+      ],
+      "negative": [
+        "30",
+        0
+      ],
+      "latent_image": [
+        "32",
+        0
+      ],
+      "denoise": 1.0
+    }
+  },
+  "34": {
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "デコード"
+    },
+    "inputs": {
+      "samples": [
+        "33",
+        0
+      ],
+      "vae": [
+        "22",
+        0
+      ]
+    }
+  },
+  "80": {
+    "class_type": "ImageScale",
+    "_meta": {
+      "title": "元の解像度へ戻す"
+    },
+    "inputs": {
+      "image": [
+        "34",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "width": [
+        "10",
+        0
+      ],
+      "height": [
+        "10",
+        1
+      ],
+      "crop": "disabled"
+    }
+  },
+  "81": {
+    "class_type": "ImageCompositeMasked",
+    "_meta": {
+      "title": "マスク範囲だけ元画像へ貼り戻す"
+    },
+    "inputs": {
+      "destination": [
+        "1",
+        0
+      ],
+      "source": [
+        "80",
+        0
+      ],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": [
+        "7",
+        0
+      ]
+    }
+  },
+  "82": {
+    "class_type": "MaskComposite",
+    "_meta": {
+      "title": "透明のまま残す範囲 = 元の透明 − 描き足し範囲"
+    },
+    "inputs": {
+      "destination": [
+        "1",
+        1
+      ],
+      "source": [
+        "4",
+        0
+      ],
+      "x": 0,
+      "y": 0,
+      "operation": "subtract"
+    }
+  },
+  "83": {
+    "class_type": "JoinImageWithAlpha",
+    "_meta": {
+      "title": "アルファを付け直す"
+    },
+    "inputs": {
+      "image": [
+        "81",
+        0
+      ],
+      "alpha": [
+        "82",
+        0
+      ]
+    }
+  },
+  "90": {
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存: 完成パーツ(RGBA)"
+    },
+    "inputs": {
+      "images": [
+        "83",
+        0
+      ],
+      "filename_prefix": "live2d_parts/qwen_fast_final"
+    }
+  },
+  "91": {
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存: モデルの生出力(確認用)"
+    },
+    "inputs": {
+      "images": [
+        "80",
+        0
+      ],
+      "filename_prefix": "live2d_parts/qwen_fast_raw"
+    }
+  }
+}

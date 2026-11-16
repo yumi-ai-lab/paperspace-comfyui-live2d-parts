@@ -25,11 +25,17 @@ RUN pip install --no-cache-dir torch torchvision torchaudio --extra-index-url ht
 # ComfyUIの要件と、★超重要：BAN回避のための安全な中継パーツを追加インストール
 RUN pip install --no-cache-dir -r requirements.txt jupyterlab jupyter-server-proxy
 
+# ComfyUI本体が要求する依存を焼き込む(マシン再起動のたびに入れ直さずに済むようにする)
+RUN git clone --depth 1 https://github.com/Comfy-Org/ComfyUI /opt/comfyui-src \
+    && pip install --no-cache-dir -r /opt/comfyui-src/requirements.txt \
+    && rm -rf /opt/comfyui-src
+
 # セットアップ用スクリプトとワークフローをイメージに同梱
 # ※ モデル本体は同梱しない(FLUX 3 Klein はライセンス同意が必要なため、利用者が自分のトークンで取得する)
 COPY scripts /opt/live2d-parts/scripts
 COPY workflows /opt/live2d-parts/workflows
 COPY test_assets /opt/live2d-parts/test_assets
+COPY notebooks /opt/live2d-parts/notebooks
 RUN chmod +x /opt/live2d-parts/scripts/*.sh
 
 # Paperspace(8888)とComfyUI(8188)、TensorBoard(6006)のポートを開放

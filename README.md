@@ -33,17 +33,28 @@
 
 ## 使い方(Paperspace)
 
+マシンを起動するたびに、`/notebooks/Live2D_Parts_START.ipynb` を開いて上から順に実行する(Run All でも可)。
+
+1. 設定(使うモデル、モデルを保存領域に残すか)
+2. Hugging Faceトークンの登録(FLUXを使う場合、**初回だけ**。`/notebooks/.hf/token` に保存され、次回から入力不要)
+3. ComfyUIと部品の準備
+4. モデルの取得
+5. ComfyUIの起動(セルを実行したままにする)
+
+初回でノートブックがまだ無い場合は、ターミナルで次を実行すると配置される。
+
 ```bash
-bash /opt/live2d-parts/scripts/setup.sh
-bash /opt/live2d-parts/scripts/download_models.sh qwen
-export HF_TOKEN=hf_xxx   # FLUXを使う場合のみ。事前にHugging Faceでライセンス同意
-bash /opt/live2d-parts/scripts/download_models.sh flux
-bash /opt/live2d-parts/scripts/start.sh
-# 別ターミナルで
-python /opt/live2d-parts/scripts/run_test.py /opt/live2d-parts/workflows/live2d_inpaint_qwen2511_fast.json
+cp /opt/live2d-parts/notebooks/Live2D_Parts_START.ipynb /notebooks/
 ```
 
-モデルは既定で `/tmp/models`(一時領域)に置く。マシンを止めると消えるので、起動のたびに再取得する。
+モデルは既定で `/tmp/models`(一時領域)に置く。マシンを止めると消えるが、ノートブックを実行し直せば戻る。
+ノートブックの `KEEP_MODELS = True` で `/notebooks/models` に残せる(50GB以上使うので保存容量と料金に注意)。
+
+動作テスト:
+
+```bash
+python /notebooks/live2d-parts-repo/scripts/run_test.py /notebooks/live2d-parts-repo/workflows/live2d_inpaint_qwen2511_fast.json
+```
 
 ## ライセンス上の注意
 

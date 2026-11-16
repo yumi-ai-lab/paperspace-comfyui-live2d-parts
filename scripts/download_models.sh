@@ -4,7 +4,8 @@
 #   bash download_models.sh flux     FLUX 3 Image Klein 一式   (約24GB / 要HF_TOKEN / FLUX Kommunity License)
 #   bash download_models.sh all
 # FLUX は事前に https://huggingface.co/black-forest-labs/flux-3-image-klein-comfy でライセンスに同意し、
-#   export HF_TOKEN=hf_xxx   を設定してから実行する(トークンはファイルに書かない)。
+#   export HF_TOKEN=hf_xxx   を設定するか、起動ノートブックでトークンを登録してから実行する。
+#   登録済みトークンは HF_TOKEN_PATH (既定 /notebooks/.hf/token) から読む。
 set -euo pipefail
 MODEL_DIR="${MODEL_DIR:-/tmp/models}"
 WHAT="${1:-all}"
@@ -28,8 +29,10 @@ if [ "$WHAT" = "qwen" ] || [ "$WHAT" = "all" ]; then
 fi
 
 if [ "$WHAT" = "flux" ] || [ "$WHAT" = "all" ]; then
+  TP="${HF_TOKEN_PATH:-/notebooks/.hf/token}"
+  if [ -z "${HF_TOKEN:-}" ] && [ -s "$TP" ]; then export HF_TOKEN="$(tr -d '[:space:]' < "$TP")"; fi
   if [ -z "${HF_TOKEN:-}" ]; then
-    echo "[flux] HF_TOKEN が未設定のためスキップしました(ライセンス同意後に export HF_TOKEN=... を設定)"; 
+    echo "[flux] HF_TOKEN が未設定のためスキップしました(起動ノートブックのセル2でトークンを登録してください)"; 
     [ "$WHAT" = "flux" ] && exit 1 || exit 0
   fi
   R=black-forest-labs/flux-3-image-klein-comfy

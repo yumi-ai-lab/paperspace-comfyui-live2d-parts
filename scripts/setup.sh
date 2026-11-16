@@ -38,4 +38,6 @@ YAML
 W="$COMFY_DIR/user/default/workflows/live2d-parts"
 mkdir -p "$W"
 cp "$HERE"/workflows/live2d_*.json "$W"/
+# 起動ノートブックを作業フォルダへ(設定を書き換えた既存ファイルは上書きしない)
+if [ -d /notebooks ] && [ -f "$HERE/notebooks/Live2D_Parts_START.ipynb" ]; then cp -n "$HERE/notebooks/Live2D_Parts_START.ipynb" /notebooks/ || true; fi
 echo "[setup] 完了: ComfyUI=$COMFY_DIR  モデル置き場=$MODEL_DIR  ワークフロー=$W"
